@@ -10,8 +10,7 @@ class Field:
 
 
 class Name(Field):
-    def __init__(self, value):
-        super().__init__(value)
+    pass
 
 
 class Phone(Field):
@@ -27,9 +26,11 @@ class Phone(Field):
 
 
 class Record:
-    def __init__(self, name):
+    def __init__(self, name, phone=None):
         self.name = Name(name)
         self.phones = []
+        if phone:
+            self.add_phone(phone)
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
@@ -46,13 +47,13 @@ class Record:
 
 class AddressBook(UserDict):
     def add_record(self, record):
-        self.data[record.name.value] = record
+        self.data[record.name.value.lower()] = record
 
     def remove_record(self, name):
-        del self.data[name]
+        del self.data[name.lower()]
 
     def edit_record(self, name, record):
-        self.data[name] = record
+        self.data[name.lower()] = record
 
 
 contacts = AddressBook()
@@ -74,29 +75,34 @@ def input_error(func):
 @input_error
 def add_contact(command):
     name, phone = command.split()
-    contacts[name.lower()] = phone
+    contacts.add_record(Record(name, phone))
     return f"Contact {name} added"
 
 
 @input_error
 def change_contact(command):
     name, phone = command.split()
-    contacts[name.lower()] = phone
+    record = contacts.data[name.lower()]
+    record.edit_phone(phone)
+    contacts.edit_record(name, record)
     return f"Phone number for {name} changed"
 
 
 @input_error
 def get_phone(command):
     name = command.lower()
-    return f"Phone number for {name} is {contacts[name]}"
+    record = contacts.data[name]
+    phones = ", ".join(str(phone) for phone in record.phones)
+    return f"Phone number(s) for {name}: {phones}"
 
 
 def show_all():
     if not contacts:
         return "No contacts found"
     result = "Contacts:\n"
-    for name, phone in contacts.items():
-        result += f"{name}: {phone}\n"
+    for record in contacts.values():
+        phones = ", ".join(str(phone) for phone in record.phones)
+        result += f"{record.name}: {phones}\n"
     return result
 
 
